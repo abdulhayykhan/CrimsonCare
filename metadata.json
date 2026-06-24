@@ -1,0 +1,6 @@
+{
+  "name": "CrimsonCare",
+  "description": "CrimsonCare - Private, 100% offline period tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
