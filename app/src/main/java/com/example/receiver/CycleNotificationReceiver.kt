@@ -40,23 +40,23 @@ class CycleNotificationReceiver : BroadcastReceiver() {
             }
             "ACTION_ONE_DAY_BEFORE_PERIOD" -> {
                 Log.d(TAG, "One Day Before Period alarm received.")
-                postCustomNotification(context, "Your cycle is predicted to start tomorrow. Stay prepared.", 406)
+                postCustomNotification(context, "Just a loving heads-up, beautiful: your cycle is predicted to start tomorrow. Let me know if you need anything.", 406)
             }
             "ACTION_PMS_WARNING" -> {
                 Log.d(TAG, "PMS Warning alarm received.")
-                postCustomNotification(context, "Entering your PMS phase. Be gentle with yourself.", 407)
+                postCustomNotification(context, "Entering your PMS phase. Take it super easy and be extra gentle with yourself today, gorgeous.", 407)
             }
             "ACTION_FERTILE_WINDOW_START" -> {
                 Log.d(TAG, "Fertile Window Start alarm received.")
-                postCustomNotification(context, "Your fertile window is opening.", 408)
+                postCustomNotification(context, "You're absolutely glowing! Your fertile window is opening.", 408)
             }
             "ACTION_FERTILE_WINDOW_END" -> {
                 Log.d(TAG, "Fertile Window End alarm received.")
-                postCustomNotification(context, "Your fertile window has concluded.", 409)
+                postCustomNotification(context, "Your fertile window has closed for this cycle, beautiful. Hope you're having a great day.", 409)
             }
             "ACTION_POST_CYCLE_HEALTH_CHECK" -> {
                 Log.d(TAG, "Post-Cycle Health Check alarm received.")
-                postCustomNotification(context, "Time for your routine monthly health check-in.", 410)
+                postCustomNotification(context, "Just a loving reminder to do your monthly health check-in. I want you safe and healthy.", 410)
             }
             else -> {
                 Log.d(TAG, "Alarm received! Building and posting standard prediction notification.")
@@ -134,7 +134,7 @@ class CycleNotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder) // Built-in recognizable system icon
             .setContentTitle("CrimsonCare")
-            .setContentText("Your cycle is expected to start in about 2 days.")
+            .setContentText("Gentle heads-up that your cycle is expected to start in about 2 days. I'm right here with you.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
@@ -178,7 +178,7 @@ class CycleNotificationReceiver : BroadcastReceiver() {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder) // Built-in system icon
             .setContentTitle("CrimsonCare")
-            .setContentText("You have reached your predicted ovulation day.")
+            .setContentText("You've reached your predicted ovulation day! Shining so bright today.")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

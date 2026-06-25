@@ -241,7 +241,7 @@ fun CrimsonDashboard(
                             }
 
                             Text(
-                                text = "Your Ovulation Day",
+                                text = "You're glowing, beautiful!",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFB12E33)
@@ -250,7 +250,7 @@ fun CrimsonDashboard(
                             )
 
                             Text(
-                                text = "You've reached your predicted ovulation day! During this peak fertility phase, your body is in the ovulation window. This is often accompanied by higher energy levels, an elevated mood, and active physical vitality. Embrace the positive flow of your cycle and listen to your body's natural rhythms.",
+                                text = "It's your predicted ovulation day. Enjoy the energy boost today—I'm always here admiring you!",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = Color(0xFFB12E33).copy(alpha = 0.85f),
                                     lineHeight = 20.sp
@@ -320,7 +320,7 @@ fun CrimsonDashboard(
                             }
 
                             Text(
-                                text = "Cycle Delayed?",
+                                text = "Is your cycle a bit late, beautiful?",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFB12E33)
@@ -329,7 +329,7 @@ fun CrimsonDashboard(
                             )
 
                             Text(
-                                text = "Log a delayed start or update your onboarding settings.",
+                                text = "Your cycle seems a little late. Let's log a delayed start or update your settings. I'm here to support you!",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = Color(0xFFB12E33).copy(alpha = 0.85f),
                                     lineHeight = 20.sp
@@ -707,14 +707,14 @@ fun DashboardContent(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
-                                text = "Symptom Warning",
+                                text = "A loving heads-up, gorgeous",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFB12E33)
                                 )
                             )
                             Text(
-                                text = "Note: You frequently log cramps around this time. Prepare ahead.",
+                                text = "I noticed you usually get cramps around this time. Please take it extra easy, grab a warm heating pad, and prepare ahead.",
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = Color(0xFFB12E33).copy(alpha = 0.85f)
                                 )
