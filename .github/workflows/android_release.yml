@@ -46,8 +46,8 @@ jobs:
           
           # Handle release keystore fallback if not present
           if [ ! -f my-upload-key.jks ]; then
-            echo "No release upload key found. Creating fallback from debug keystore..."
-            cp debug.keystore my-upload-key.jks
+            echo "No release upload key found. Generating fallback release keystore with alias 'upload'..."
+            keytool -genkey -v -keystore my-upload-key.jks -storepass android -alias upload -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Release,O=Android,C=US"
           fi
 
       - name: Build with Gradle
@@ -63,7 +63,7 @@ jobs:
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'android' }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH || 'my-upload-key.jks' }}
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH || format('{0}/my-upload-key.jks', github.workspace) }}
 
       - name: Determine Version and Tag Name
         id: determine_tag
