@@ -17,7 +17,8 @@ data class CycleState(
     val nextPeriodDate: LocalDate?,
     val daysUntilNextPeriod: Int?,
     val phase: CyclePhase?,
-    val isOverdue: Boolean
+    val isOverdue: Boolean,
+    val predictedOvulationDate: LocalDate? = null
 )
 
 data class CycleHistoryItem(
@@ -53,7 +54,8 @@ object PeriodCalculator {
                 nextPeriodDate = null,
                 daysUntilNextPeriod = null,
                 phase = null,
-                isOverdue = false
+                isOverdue = false,
+                predictedOvulationDate = null
             )
         }
 
@@ -62,7 +64,8 @@ object PeriodCalculator {
             nextPeriodDate = null,
             daysUntilNextPeriod = null,
             phase = null,
-            isOverdue = false
+            isOverdue = false,
+            predictedOvulationDate = null
         )
 
         // Calculate days since last period started
@@ -71,6 +74,7 @@ object PeriodCalculator {
 
         // Predict next period date
         val nextPeriodDate = lastPeriodDate.plusDays(averageCycleLength.toLong())
+        val predictedOvulationDate = nextPeriodDate.minusDays(14)
 
         // Calculate days until next period
         val daysUntilNextPeriod = ChronoUnit.DAYS.between(today, nextPeriodDate).toInt()
@@ -83,7 +87,8 @@ object PeriodCalculator {
                 nextPeriodDate = nextPeriodDate,
                 daysUntilNextPeriod = daysUntilNextPeriod,
                 phase = CyclePhase.MENSTUAL,
-                isOverdue = false
+                isOverdue = false,
+                predictedOvulationDate = predictedOvulationDate
             )
         }
 
@@ -95,7 +100,8 @@ object PeriodCalculator {
             nextPeriodDate = nextPeriodDate,
             daysUntilNextPeriod = daysUntilNextPeriod,
             phase = phase,
-            isOverdue = isOverdue
+            isOverdue = isOverdue,
+            predictedOvulationDate = predictedOvulationDate
         )
     }
 
@@ -188,5 +194,62 @@ object PeriodCalculator {
         }
 
         return symptomsCount.toList().sortedByDescending { it.second }
+    }
+
+    fun checkCrampsInLastTwoCycles(allLogs: List<DailyLog>): Boolean {
+        // Group period days into episodes if gap <= 4 days
+        val periodDays = allLogs
+            .filter { it.flowIntensity > 0 }
+            .mapNotNull { parseDate(it.date) }
+            .sorted()
+        if (periodDays.isEmpty()) return false
+
+        val episodes = mutableListOf<List<LocalDate>>()
+        var currentEpisode = mutableListOf<LocalDate>()
+
+        for (date in periodDays) {
+            if (currentEpisode.isEmpty()) {
+                currentEpisode.add(date)
+            } else {
+                val lastDate = currentEpisode.last()
+                val daysBetween = ChronoUnit.DAYS.between(lastDate, date)
+                if (daysBetween <= 4) {
+                    currentEpisode.add(date)
+                } else {
+                    episodes.add(currentEpisode)
+                    currentEpisode = mutableListOf(date)
+                }
+            }
+        }
+        if (currentEpisode.isNotEmpty()) {
+            episodes.add(currentEpisode)
+        }
+
+        // We want to check the last 2 consecutive completed/active episodes
+        // If there are fewer than 2 episodes, we don't have enough data
+        if (episodes.size < 2) return false
+
+        // Filter episodes that are completed before today or start before today
+        val pastEpisodes = episodes.filter { it.first().isBefore(LocalDate.now()) }
+        if (pastEpisodes.size < 2) return false
+
+        val lastTwoEpisodes = pastEpisodes.takeLast(2)
+
+        for (episode in lastTwoEpisodes) {
+            val day1 = episode.first()
+            val day2 = day1.plusDays(1)
+
+            val day1Log = allLogs.find { it.date == day1.toString() }
+            val day2Log = allLogs.find { it.date == day2.toString() }
+
+            val day1HasCramps = day1Log?.symptoms?.split(",")?.any { it.trim().equals("Cramps", ignoreCase = true) } == true
+            val day2HasCramps = day2Log?.symptoms?.split(",")?.any { it.trim().equals("Cramps", ignoreCase = true) } == true
+
+            if (!day1HasCramps && !day2HasCramps) {
+                return false
+            }
+        }
+
+        return true
     }
 }

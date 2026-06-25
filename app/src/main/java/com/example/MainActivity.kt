@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Settings
 import android.content.Context
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.example.data.CrimsonDatabase
 import com.example.data.CrimsonRepository
@@ -176,10 +177,12 @@ class MainActivity : FragmentActivity() {
             viewModel.navigateTo(CrimsonScreen.ONBOARDING)
         }
 
-        // Start collecting userSettings to schedule/re-schedule local prediction notifications
+        // Start collecting userSettings and allDailyLogs to schedule/re-schedule all local notifications
         lifecycleScope.launch {
-            viewModel.userSettings.collectLatest { settings ->
-                CycleNotificationScheduler.schedulePredictionNotification(applicationContext, settings)
+            combine(viewModel.userSettings, viewModel.allDailyLogs) { settings, logs ->
+                Pair(settings, logs)
+            }.collectLatest { (settings, logs) ->
+                CycleNotificationScheduler.scheduleAllNotifications(applicationContext, settings, logs)
             }
         }
         
@@ -205,17 +208,40 @@ class MainActivity : FragmentActivity() {
                             userSettings != null && 
                             userSettings?.lastPeriodDate?.isNotBlank() == true
                 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        if (showBottomBar) {
-                            NavigationBar(
-                                containerColor = Color.White,
-                                tonalElevation = 0.dp,
-                                modifier = Modifier
-                                    .border(1.dp, SleekBorderVariant, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                                    .testTag("bottom_nav_bar")
-                            ) {
+                val backgroundGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFFDE7E9), // Light Pink
+                        Color(0xFFFFF1F2), // Soft Peach
+                        Color(0xFFFFFFFF)  // White
+                    )
+                )
+
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(backgroundGradient)
+                ) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = Color.Transparent,
+                        bottomBar = {
+                            if (showBottomBar) {
+                                NavigationBar(
+                                    containerColor = Color.White.copy(alpha = 0.45f),
+                                    tonalElevation = 0.dp,
+                                    modifier = Modifier
+                                        .border(
+                                            width = 1.dp,
+                                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.White.copy(alpha = 0.60f),
+                                                    Color.White.copy(alpha = 0.25f)
+                                                )
+                                            ),
+                                            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                                        )
+                                        .testTag("bottom_nav_bar")
+                                ) {
                                 NavigationBarItem(
                                     selected = currentScreen == CrimsonScreen.DASHBOARD,
                                     onClick = { viewModel.navigateTo(CrimsonScreen.DASHBOARD) },
@@ -363,6 +389,7 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
+                } // Closing the Box
                 } // Closing the else { block
             }
         }

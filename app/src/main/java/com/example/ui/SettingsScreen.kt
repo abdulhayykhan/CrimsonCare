@@ -71,7 +71,7 @@ fun SettingsScreen(
             Toast.makeText(context, "Notification permission granted!", Toast.LENGTH_SHORT).show()
             // Re-trigger alarm setup
             userSettings?.let { settings ->
-                com.example.util.CycleNotificationScheduler.schedulePredictionNotification(context, settings)
+                com.example.util.CycleNotificationScheduler.scheduleAllNotifications(context, settings, allLogs)
             }
         } else {
             Toast.makeText(context, "Prediction reminders require notification permission.", Toast.LENGTH_LONG).show()
@@ -81,9 +81,6 @@ fun SettingsScreen(
     val sharedPrefs = remember(context) { context.getSharedPreferences("crimson_care_prefs", Context.MODE_PRIVATE) }
     var isAppLockEnabled by remember {
         mutableStateOf(sharedPrefs.getBoolean("app_lock_enabled", false))
-    }
-    var selectedTheme by remember {
-        mutableStateOf(sharedPrefs.getString("theme_mode", "system") ?: "system")
     }
 
     // Helper to calculate total logged symptoms
@@ -532,111 +529,7 @@ fun SettingsScreen(
                 }
             }
 
-            // 1.7 Visual Theme Selection Panel
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("visual_theme_card"),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = SleekSurfaceVariant),
-                border = BorderStroke(1.dp, SleekOutline)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .background(WarmRose, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Visual Theme Settings",
-                                tint = CrimsonPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Application Theme",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
-                                ),
-                                color = SleekTextPrimary
-                            )
-                            Text(
-                                text = when (selectedTheme) {
-                                    "light" -> "Force Light Mode"
-                                    "dark" -> "Force Dark Mode"
-                                    else -> "Match System Default"
-                                },
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = CrimsonPrimary,
-                                    letterSpacing = 1.sp
-                                )
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "Choose whether CrimsonCare matches your device appearance or forces a custom light or dark aesthetic.",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp
-                        ),
-                        color = SleekTextSecondary
-                    )
-
-                    // Triple segmented buttons/selectors for Light, Dark, System
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val options = listOf(
-                            Triple("light", "Light", "theme_btn_light"),
-                            Triple("dark", "Dark", "theme_btn_dark"),
-                            Triple("system", "System", "theme_btn_system")
-                        )
-                        options.forEach { (mode, label, tag) ->
-                            val isSelected = selectedTheme == mode
-                            Button(
-                                onClick = {
-                                    selectedTheme = mode
-                                    sharedPrefs.edit().putString("theme_mode", mode).apply()
-                                    Toast.makeText(context, "$label Theme applied successfully!", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .testTag(tag),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isSelected) CrimsonPrimary else SleekBackgroundVariant,
-                                    contentColor = if (isSelected) Color.White else SleekTextPrimary
-                                ),
-                                contentPadding = PaddingValues(vertical = 12.dp),
-                                border = if (isSelected) null else BorderStroke(1.dp, SleekBorderVariant)
-                            ) {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
 
             // 2. Data Statistics Panel
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

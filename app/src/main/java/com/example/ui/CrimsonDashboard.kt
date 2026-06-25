@@ -57,82 +57,102 @@ fun CrimsonDashboard(
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
 
     var showSetupDialog by remember { mutableStateOf(false) }
+    var hasShownOvulationPopup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var hasShownLatePeriodAlert by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column(
-                        modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
-                    ) {
-                        Text(
-                            text = "CrimsonCare",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 24.sp,
-                                letterSpacing = (-0.5).sp
-                            ),
-                            color = SleekTextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "CYCLE OVERVIEW",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
-                                letterSpacing = 1.2.sp
-                            ),
-                            color = SleekTextSecondary
-                        )
-                    }
-                },
-                actions = {
-                    if (userSettings != null && userSettings?.lastPeriodDate?.isNotBlank() == true) {
-                        Box(
-                            modifier = Modifier
-                                .padding(end = 16.dp)
-                                .size(44.dp)
-                                .background(WarmRose, CircleShape)
-                                .clickable { showSetupDialog = true }
-                                .testTag("settings_button"),
-                            contentAlignment = Alignment.Center
+    // Linear gradient background: Light Pink to Soft Peach to White
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFFDE7E9), // Light Pink
+            Color(0xFFFFF1F2), // Soft Peach
+            Color(0xFFFFFFFF)  // White
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundGradient)
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column(
+                            modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Edit Settings",
-                                tint = CrimsonSecondary,
-                                modifier = Modifier.size(20.dp)
+                            Text(
+                                text = "CrimsonCare",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 24.sp,
+                                    letterSpacing = (-0.5).sp
+                                ),
+                                color = CrimsonPrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "CYCLE OVERVIEW",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    letterSpacing = 1.2.sp
+                                ),
+                                color = CrimsonSecondary
                             )
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    },
+                    actions = {
+                        if (userSettings != null && userSettings?.lastPeriodDate?.isNotBlank() == true) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 16.dp)
+                                    .size(44.dp)
+                                    .background(WarmRose, CircleShape)
+                                    .clickable { showSetupDialog = true }
+                                    .testTag("settings_button"),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Edit Settings",
+                                    tint = CrimsonSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White.copy(alpha = 0.45f) // Frosted translucent glass
+                    ),
+                    modifier = Modifier.border(
+                        width = 0.5.dp,
+                        color = Color.White.copy(alpha = 0.35f)
+                    )
                 )
-            )
-        },
-        modifier = modifier.fillMaxSize()
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            val hasSettings = userSettings != null && userSettings?.lastPeriodDate?.isNotBlank() == true
+            },
+            containerColor = Color.Transparent, // Transparent scaffold container
+            modifier = modifier.fillMaxSize()
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                val hasSettings = userSettings != null && userSettings?.lastPeriodDate?.isNotBlank() == true
 
-            if (!hasSettings) {
-                // If no settings exist, prompt with onboarding
-                OnboardingSetupView(
-                    onSave = { date, cycle, period ->
-                        viewModel.saveUserSettings(date, cycle, period)
-                    }
-                )
-            } else {
-                // Active tracker dashboard
-                DashboardContent(
+                if (!hasSettings) {
+                    // If no settings exist, prompt with onboarding
+                    OnboardingSetupView(
+                        onSave = { date, cycle, period ->
+                            viewModel.saveUserSettings(date, cycle, period)
+                        }
+                    )
+                } else {
+                    // Active tracker dashboard
+                    DashboardContent(
                     cycleState = cycleState,
                     allLogs = allDailyLogs,
                     onLogClick = {
@@ -155,16 +175,14 @@ fun CrimsonDashboard(
             // Dialog for editing user settings
             if (showSetupDialog) {
                 Dialog(onDismissRequest = { showSetupDialog = false }) {
-                    Card(
+                    GlassCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        cornerRadius = 24.dp
                     ) {
                         Column(
                             modifier = Modifier
-                                .padding(24.dp)
                                 .fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -191,9 +209,164 @@ fun CrimsonDashboard(
                 }
             }
 
+            // Ovulation Alert Pop-up Dialog
+            val isTodayOvulationDay = cycleState.predictedOvulationDate != null && cycleState.predictedOvulationDate == LocalDate.now()
+            if (isTodayOvulationDay && !hasShownOvulationPopup) {
+                Dialog(onDismissRequest = { hasShownOvulationPopup = true }) {
+                    GlassCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .testTag("ovulation_dialog"),
+                        cornerRadius = 24.dp
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .background(Color(0xFFFDE7E9), CircleShape)
+                                    .border(1.dp, Color(0xFFB12E33).copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    tint = Color(0xFFB12E33),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+
+                            Text(
+                                text = "Your Ovulation Day",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB12E33)
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Text(
+                                text = "You've reached your predicted ovulation day! During this peak fertility phase, your body is in the ovulation window. This is often accompanied by higher energy levels, an elevated mood, and active physical vitality. Embrace the positive flow of your cycle and listen to your body's natural rhythms.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color(0xFFB12E33).copy(alpha = 0.85f),
+                                    lineHeight = 20.sp
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Button(
+                                onClick = { hasShownOvulationPopup = true },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFB12E33),
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(100),
+                                modifier = Modifier
+                                    .fillMaxWidth(0.7f)
+                                    .height(48.dp)
+                                    .testTag("dismiss_ovulation_button")
+                            ) {
+                                Text(
+                                    text = "Dismiss",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Late Period Anomaly Dialog
+            val isPeriodLate = cycleState.nextPeriodDate != null && LocalDate.now().isAfter(cycleState.nextPeriodDate!!)
+            val hasFlowOnOrAfterPredicted = allDailyLogs.any { log ->
+                val logDate = PeriodCalculator.parseDate(log.date)
+                logDate != null && (logDate.isEqual(cycleState.nextPeriodDate) || logDate.isAfter(cycleState.nextPeriodDate!!)) && log.flowIntensity > 0
+            }
+            if (isPeriodLate && !hasFlowOnOrAfterPredicted && !hasShownLatePeriodAlert) {
+                Dialog(onDismissRequest = { hasShownLatePeriodAlert = true }) {
+                    GlassCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .testTag("late_period_dialog"),
+                        cornerRadius = 24.dp
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .background(Color(0xFFFDE7E9), CircleShape)
+                                    .border(1.dp, Color(0xFFB12E33).copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = Color(0xFFB12E33),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+
+                            Text(
+                                text = "Cycle Delayed?",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB12E33)
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Text(
+                                text = "Log a delayed start or update your onboarding settings.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color(0xFFB12E33).copy(alpha = 0.85f),
+                                    lineHeight = 20.sp
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Button(
+                                onClick = { hasShownLatePeriodAlert = true },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFB12E33),
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(100),
+                                modifier = Modifier
+                                    .fillMaxWidth(0.7f)
+                                    .height(48.dp)
+                                    .testTag("dismiss_late_period_button")
+                            ) {
+                                Text(
+                                    text = "Dismiss",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
 
         }
     }
+}
 }
 
 @Composable
@@ -225,15 +398,12 @@ fun OnboardingSetupView(
             textAlign = TextAlign.Center
         )
 
-        Card(
+        GlassCard(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            cornerRadius = 24.dp
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -329,16 +499,15 @@ fun OnboardingFormContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        OutlinedCard(
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { datePickerDialog.show() }
                 .testTag("date_picker_trigger"),
-            colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+            cornerRadius = 16.dp
         ) {
             Row(
                 modifier = Modifier
-                    .padding(16.dp)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -502,6 +671,60 @@ fun DashboardContent(
             }
         }
 
+        // Predictive Symptom Warning card on Day 1
+        val showPredictiveWarning = cycleState.currentCycleDay == 1 && PeriodCalculator.checkCrampsInLastTwoCycles(allLogs)
+        if (showPredictiveWarning) {
+            item {
+                GlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .testTag("predictive_symptom_warning_card"),
+                    cornerRadius = 24.dp
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(Color(0xFFFDE7E9), CircleShape)
+                                .border(1.dp, Color(0xFFB12E33).copy(alpha = 0.2f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Color(0xFFB12E33),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Symptom Warning",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB12E33)
+                                )
+                            )
+                            Text(
+                                text = "Note: You frequently log cramps around this time. Prepare ahead.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = Color(0xFFB12E33).copy(alpha = 0.85f)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Floating Hero Progress Ring
         item {
             Column(
@@ -619,15 +842,12 @@ fun DashboardContent(
                     else -> "Period is ${Math.abs(cycleState.daysUntilNextPeriod)} days overdue"
                 }
 
-                Card(
+                GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = SleekSurfaceVariant),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SleekOutline)
+                    cornerRadius = 24.dp
                 ) {
                     Row(
                         modifier = Modifier
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -684,15 +904,12 @@ fun DashboardContent(
                     else -> Icons.Default.Star
                 }
 
-                Card(
+                GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = SleekSurfaceVariant),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SleekOutline)
+                    cornerRadius = 24.dp
                 ) {
                     Row(
                         modifier = Modifier
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -799,14 +1016,12 @@ fun DashboardContent(
         // Timeline Records List
         if (allLogs.isEmpty()) {
             item {
-                Card(
+                GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                    cornerRadius = 24.dp
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(32.dp)
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -931,17 +1146,14 @@ fun LogHistoryItem(
         else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
     }
 
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onEdit() },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, SleekOutline.copy(alpha = 0.5f))
+        cornerRadius = 24.dp
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
