@@ -28,7 +28,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Verify or Decode Keystores
         run: |
@@ -48,11 +50,16 @@ jobs:
             cp debug.keystore my-upload-key.jks
           fi
 
-      - name: Grant Execute Permission to Gradlew
-        run: chmod +x gradlew
-
       - name: Build with Gradle
-        run: ./gradlew assembleDebug assembleRelease
+        run: |
+          if [ -f gradlew ]; then
+            echo "Using gradlew to build..."
+            chmod +x gradlew
+            ./gradlew assembleDebug assembleRelease
+          else
+            echo "gradlew not found! Falling back to system gradle..."
+            gradle assembleDebug assembleRelease
+          fi
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'android' }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
