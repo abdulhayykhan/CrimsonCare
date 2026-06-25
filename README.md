@@ -1,60 +1,54 @@
 # CrimsonCare
 
-**CrimsonCare** is a secure, **100% offline** menstrual health companion and period tracking application. Built natively for Android using **Kotlin**, **Jetpack Compose**, and **Room Database**, it strictly adheres to **Material Design 3** guidelines.
+CrimsonCare is a private, 100% offline, secure menstrual health companion and period tracking application built natively using **Kotlin**, **Jetpack Compose**, and **Room Database** under Material Design 3 guidelines.
 
-## Core Philosophy: Absolute Privacy
+## Key Design & Architecture Highlights
 
-Health data belongs strictly on the device. **CrimsonCare** operates with **zero network connections**, no third-party trackers, and no cloud sync services. All health logs are stored locally on a secure SQLite database via Android Room.
+- **100% Offline & Private**: Zero external network connections, trackers, or cloud sync services. All health logs are stored locally on the secure SQLite database via Android Room.
+- **Local Settings Store**: Intelligently maintains personalized settings like the date of your last period, average cycle length, and average period length.
+- **Dynamic Prediction Model**: Calculates your current cycle day, determines your biological phase (Menstruation, Follicular, Fertile/Ovulation, Luteal), and counts down to the predicted start of your next period.
+- **Responsive Fluid UI**: Features a beautiful circular canvas progress wheel, Native Date Pickers, active cycle-phase theme tints, and interactive logging cards.
 
-## Key Features
+## Setup & Implementation (Phase 1)
 
-* **Dynamic Prediction Engine**: Automatically calculates the current cycle day, maps biological phases (Menstruation, Follicular, Ovulation, Luteal), and counts down to the next predicted period.
-* **Fluid UI/UX**: Features an interactive circular canvas progress wheel, native Material 3 date pickers, phase-aware theme tinting, and responsive logging cards.
-* **Local Settings Management**: Intelligently maintains personalized baselines, including the last cycle date, average cycle length, and average flow duration.
+### 1. Database & Entities
+- **UserSettings**: Single row table storing average cycle/period lengths and last recorded period start date in `YYYY-MM-DD` format.
+- **DailyLog**: Capture daily symptoms (cramps, bloating, mood swings, fatigue) and flow intensities (None, Light, Medium, Heavy) linked via database primary key date indexes.
 
-## Development Roadmap & Architecture
-
-The application is architected across five distinct phases to ensure modularity.
-
-### Phase 1: Foundation & Database
-
-* **UserSettings Entity**: Single-row table storing cycle baselines in `YYYY-MM-DD` format.
-* **DailyLog Entity**: Primary key date-indexed table capturing daily flow intensity (None, Light, Medium, Heavy) and symptoms (cramps, bloating, mood swings, fatigue).
-* **Dashboard Logic**: Live cycle day calculation and prediction mapping via cycle offsets.
-
-### Phase 2: Logging & Calendar
-
-* Implementation of the isolated **Daily Logger** screen.
-* Integration of the interactive **Calendar View** for historical cycle tracking.
-
-### Phase 3: Analytics & Export
-
-* Generation of local cycle **Insights** and analytics.
-* **CSV Data Export** functionality to allow secure sharing with healthcare providers.
-
-### Phase 4: Onboarding & Alerts
-
-* Initial user **Onboarding flow** for baseline configuration.
-* Fully local, offline **Notification system** for upcoming cycle alerts.
-
-### Phase 5: Security & Polish
-
-* App-level security implementation using **Biometric/PIN lock**.
-* Complete visual polish with robust **Material 3 Dark Mode** support.
-
-## Technical Stack
-
-* **Language**: Kotlin
-* **UI Toolkit**: Jetpack Compose
-* **Local Storage**: Room Database (SQLite)
-* **Design System**: Material Design 3
+### 2. Live Predictions
+- **Current Cycle Day**: Elapsed days since the last period start date.
+- **Next Period Prediction**: Automated timeline mapping using calculated cycle offsets.
 
 ---
 
-## 📄 License
+## License
 
-This project is open-source and available for educational and commercial use under the MIT License.
+This project is licensed under the MIT License:
+
+```
+MIT License
+
+Copyright (c) 2026 CrimsonCare Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ---
 
-**Made with ❤️ by [Abdul Hayy Khan](https://www.linkedin.com/in/abdulhayykhan/)**
+*CrimsonCare is designed and maintained with care by [Abdul Hayy Khan](https://www.linkedin.com/in/abdulhayykhan).*

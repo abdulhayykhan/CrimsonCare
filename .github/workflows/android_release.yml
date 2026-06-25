@@ -1,0 +1,137 @@
+name: Android Build & Auto Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Verify or Decode Keystores
+        run: |
+          echo "Setting up keystores..."
+          # Decode debug keystore if base64 file is present
+          if [ -f debug.keystore.base64 ]; then
+            echo "Decoding debug.keystore.base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          elif [ ! -f debug.keystore ]; then
+            echo "Generating fallback debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          
+          # Handle release keystore fallback if not present
+          if [ ! -f my-upload-key.jks ]; then
+            echo "No release upload key found. Creating fallback from debug keystore..."
+            cp debug.keystore my-upload-key.jks
+          fi
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew assembleDebug assembleRelease
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD || 'android' }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH || 'my-upload-key.jks' }}
+
+      - name: Determine Version and Tag Name
+        id: determine_tag
+        run: |
+          # Extract versionName from app/build.gradle.kts
+          VERSION_NAME=$(grep "versionName =" app/build.gradle.kts | head -n 1 | awk -F'"' '{print $2}')
+          if [ -z "$VERSION_NAME" ]; then
+            VERSION_NAME="1.0"
+          fi
+          
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+            CREATE_TAG="false"
+          else
+            TAG_NAME="v$VERSION_NAME.${{ github.run_number }}"
+            CREATE_TAG="true"
+          fi
+          
+          echo "Using Tag Name: $TAG_NAME"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "CREATE_TAG=$CREATE_TAG" >> $GITHUB_ENV
+
+      - name: Create and Push Git Tag (if automatic)
+        if: env.CREATE_TAG == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "${{ env.TAG_NAME }}" -m "Automated release tag ${{ env.TAG_NAME }}"
+          git push origin "${{ env.TAG_NAME }}"
+
+      - name: Package and Rename Artifacts
+        run: |
+          mkdir -p release-artifacts
+          
+          # Rename debug APK
+          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+            cp app/build/outputs/apk/debug/app-debug.apk release-artifacts/CrimsonCare-${{ env.TAG_NAME }}-debug.apk
+            echo "Packaged Debug APK successfully."
+          fi
+          
+          # Rename release APK
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+            cp app/build/outputs/apk/release/app-release.apk release-artifacts/CrimsonCare-${{ env.TAG_NAME }}-release.apk
+            echo "Packaged Release APK successfully."
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: CrimsonCare ${{ env.TAG_NAME }}
+          body: |
+            ## CrimsonCare Companion Android App Release `${{ env.TAG_NAME }}`
+            
+            Welcome to the automated release of **CrimsonCare**! This release was compiled and packaged securely via GitHub Actions.
+            
+            ### ✨ Features Included
+            * **Custom Vector Branding**: Integrated CrimsonCare crescent-moon and leaf visual identities as the native launcher and splash logo.
+            * **Material Design 3 Theming**: Responsive light and dark device themes.
+            * **Custom Theme Toggle**: Enforced dark, light, or system-default appearance inside the redesigned Settings panel.
+            * **Biometric security**: Edge-to-edge biometric/PIN secure app lock screen, preventing unauthorized access.
+            * **Edge-to-Edge Layout**: Redesigned title layouts and navigation systems with zero default action bars.
+            
+            ### 📦 Installation Guide
+            1. **Download** either the Release APK (`CrimsonCare-${{ env.TAG_NAME }}-release.apk`) or the Debug APK (`CrimsonCare-${{ env.TAG_NAME }}-debug.apk`) below.
+            2. **Transfer** the file to your Android device (or open this release page directly on your device browser).
+            3. **Allow Unverified Apps**: Go to your device's security settings and turn on *Install from Unknown Sources* for your file manager or browser.
+            4. **Install and Run**: Open the downloaded APK file and click *Install* to launch your CrimsonCare offline companion!
+            
+            ---
+            *This release was built, signed, and published automatically on tag creation or main branch commit.*
+          draft: false
+          prerelease: false
+          files: |
+            release-artifacts/CrimsonCare-*-debug.apk
+            release-artifacts/CrimsonCare-*-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
