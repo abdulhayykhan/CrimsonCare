@@ -127,6 +127,96 @@ class CrimsonViewModel(private val repository: CrimsonRepository) : ViewModel() 
             )
         }
     }
+
+    private val _notifications = MutableStateFlow<List<InAppNotification>>(emptyList())
+    val notifications: StateFlow<List<InAppNotification>> = _notifications.asStateFlow()
+
+    fun initNotifications(context: android.content.Context) {
+        val sharedPrefs = context.getSharedPreferences("crimson_care_prefs", android.content.Context.MODE_PRIVATE)
+        val saved = sharedPrefs.getString("in_app_notifications", null)
+        if (saved == null) {
+            val initial = listOf(
+                InAppNotification(
+                    title = "You're absolutely glowing!",
+                    message = "You're absolutely glowing! Your fertile window is opening.",
+                    timestamp = "Today, 10:00 AM"
+                ),
+                InAppNotification(
+                    title = "A loving heads-up, gorgeous",
+                    message = "I noticed you usually get cramps around this time. Please take it extra easy, grab a warm heating pad, and prepare ahead.",
+                    timestamp = "Yesterday, 8:30 PM"
+                ),
+                InAppNotification(
+                    title = "Health Check-in",
+                    message = "Just a loving reminder to do your monthly health check-in, pretty. I want you safe and healthy.",
+                    timestamp = "3 days ago"
+                )
+            )
+            val serialized = serializeNotifications(initial)
+            sharedPrefs.edit().putString("in_app_notifications", serialized).apply()
+            _notifications.value = initial
+        } else {
+            _notifications.value = deserializeNotifications(saved)
+        }
+    }
+
+    fun clearNotification(context: android.content.Context, id: String) {
+        val updated = _notifications.value.filter { it.id != id }
+        _notifications.value = updated
+        val sharedPrefs = context.getSharedPreferences("crimson_care_prefs", android.content.Context.MODE_PRIVATE)
+        sharedPrefs.edit().putString("in_app_notifications", serializeNotifications(updated)).apply()
+    }
+
+    fun clearAllNotifications(context: android.content.Context) {
+        _notifications.value = emptyList()
+        val sharedPrefs = context.getSharedPreferences("crimson_care_prefs", android.content.Context.MODE_PRIVATE)
+        sharedPrefs.edit().putString("in_app_notifications", "").apply()
+    }
+
+    fun addNotification(context: android.content.Context, title: String, message: String) {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, h:mm a")
+        val timestamp = java.time.LocalDateTime.now().format(formatter)
+        val newNotif = InAppNotification(
+            title = title,
+            message = message,
+            timestamp = timestamp
+        )
+        val updated = listOf(newNotif) + _notifications.value
+        _notifications.value = updated
+        val sharedPrefs = context.getSharedPreferences("crimson_care_prefs", android.content.Context.MODE_PRIVATE)
+        sharedPrefs.edit().putString("in_app_notifications", serializeNotifications(updated)).apply()
+    }
+}
+
+data class InAppNotification(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val title: String,
+    val message: String,
+    val timestamp: String,
+    val isRead: Boolean = false
+)
+
+fun serializeNotifications(list: List<InAppNotification>): String {
+    return list.joinToString("||") { "${it.id}##${it.title}##${it.message}##${it.timestamp}##${it.isRead}" }
+}
+
+fun deserializeNotifications(str: String?): List<InAppNotification> {
+    if (str.isNullOrBlank()) return emptyList()
+    return str.split("||").mapNotNull { part ->
+        val segments = part.split("##")
+        if (segments.size >= 4) {
+            val isRead = if (segments.size >= 5) segments[4].toBoolean() else false
+            InAppNotification(
+                id = segments[0],
+                title = segments[1],
+                message = segments[2],
+                timestamp = segments[3],
+                isRead = isRead
+            )
+        } else {
+            null
+        }
+    }
 }
 
 class CrimsonViewModelFactory(private val repository: CrimsonRepository) : ViewModelProvider.Factory {

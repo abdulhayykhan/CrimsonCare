@@ -170,6 +170,7 @@ class MainActivity : FragmentActivity() {
         // Construct the ViewModel via standard ViewModelProvider Factory
         val factory = CrimsonViewModelFactory(repository)
         val viewModel = ViewModelProvider(this, factory)[CrimsonViewModel::class.java]
+        viewModel.initNotifications(applicationContext)
         
         // First Launch Detection: check SharedPreferences
         val onboardingCompleted = sharedPrefs.getBoolean("onboarding_completed", false)

@@ -1,82 +1,54 @@
 # CrimsonCare
 
-A secure, 100% offline period and menstrual health tracking application.
+CrimsonCare is a private, 100% offline, secure menstrual health companion and period tracking application built natively using **Kotlin**, **Jetpack Compose**, and **Room Database** under Material Design 3 guidelines.
 
-## Architecture
+## Key Design & Architecture Highlights
 
-* **Framework**: Native Android built with Kotlin and Jetpack Compose.
-* **Database**: Android Room (SQLite). Stores all cycle metrics and daily logs locally.
-* **State Management**: MVVM (Model-View-ViewModel) architecture.
-* **Security**: Zero network connectivity. App-level Biometric/PIN lock integration.
+- **100% Offline & Private**: Zero external network connections, trackers, or cloud sync services. All health logs are stored locally on the secure SQLite database via Android Room.
+- **Local Settings Store**: Intelligently maintains personalized settings like the date of your last period, average cycle length, and average period length.
+- **Dynamic Prediction Model**: Calculates your current cycle day, determines your biological phase (Menstruation, Follicular, Fertile/Ovulation, Luteal), and counts down to the predicted start of your next period.
+- **Responsive Fluid UI**: Features a beautiful circular canvas progress wheel, Native Date Pickers, active cycle-phase theme tints, and interactive logging cards.
 
-## Features
+## Setup & Implementation (Phase 1)
 
-* **Dynamic Predictions**: Automated phase mapping (Menstruation, Follicular, Ovulation, Luteal) based on local data offsets.
-* **Smart Alerts**: Proactive local notifications for upcoming periods, PMS, and fertile windows using `AlarmManager`.
-* **Glassmorphism UI**: Custom forced-light theme with translucent cards and blurred gradients under Material Design 3 guidelines.
-* **Offline Data Export**: Generates local CSV files directly to the device's public Downloads folder for healthcare visits.
+### 1. Database & Entities
+- **UserSettings**: Single row table storing average cycle/period lengths and last recorded period start date in `YYYY-MM-DD` format.
+- **DailyLog**: Capture daily symptoms (cramps, bloating, mood swings, fatigue) and flow intensities (None, Light, Medium, Heavy) linked via database primary key date indexes.
 
-## Security
-
-Operates in a strict offline sandbox. No cloud sync, no tracking, and no external API calls. Authentication is handled via local AndroidX Biometrics.
-
-## Local Setup
-
-**Prerequisites**: Android Studio, JDK 17+.
-
-1. **Clone repository**:
-
-```bash
-git clone <repository-url>
-cd CrimsonCare
-
-```
-
-2. **Open Project**:
-Launch Android Studio and select **Open**. Navigate to the `CrimsonCare` directory.
-3. **Sync Gradle**:
-Allow Android Studio to download necessary AndroidX, Room, and Compose dependencies.
-4. **Run application**:
-Connect a physical Android device via USB (enable USB debugging) or start an AVD emulator. Click **Run**.
-
-## Deployment Strategy (Sideloading)
-
-1. Open Android Studio.
-2. Navigate to **Build** > **Generate Signed Bundle / APK**.
-3. Select **APK** and click Next.
-4. **Keystore**: Provide an existing Keystore or create a new one to sign the app.
-5. **Build Variant**: Select the **release** variant.
-6. Build the APK.
-7. Transfer the generated `.apk` file to the target Android device and install it manually via the file manager.
-
-## Local Data Models
-
-* `UserSettings` (Entity): Single-row table maintaining `last_period_date`, `avg_cycle_length`, and `avg_period_duration`.
-* `DailyLog` (Entity): Date-indexed records storing `flow_level` (None, Light, Medium, Heavy) and serialized `symptoms` lists.
-* `CrimsonDao`: Exposes SQLite queries for cycle histories, analytics, and symptom frequencies.
-* `PeriodCalculator`: Pure Kotlin utility for calculating phase offsets and future prediction markers based on database history.
-
-## Project Structure
-
-```text
-CrimsonCare/
-├── app/src/main/java/com/example/
-│   ├── data/             # Room Database, Entities, DAO, Repository
-│   ├── ui/               # Jetpack Compose Screens (Dashboard, Settings, Calendar)
-│   ├── ui/theme/         # Glassmorphism Colors, Typography, Theme
-│   ├── util/             # Phase Calculator, CSV Exporter, Notification Scheduler
-│   └── receiver/         # AlarmManager BroadcastReceivers
-├── app/src/main/res/
-│   ├── mipmap-*/         # Adaptive App Icons (Moon/Leaf Motif)
-│   └── values/           # Strings, XML themes
-└── build.gradle.kts      # Gradle configuration (Room, Compose, Biometrics)
-
-```
-
-## 📄 License
-
-This project is open-source and available for educational and commercial use under the MIT License.
+### 2. Live Predictions
+- **Current Cycle Day**: Elapsed days since the last period start date.
+- **Next Period Prediction**: Automated timeline mapping using calculated cycle offsets.
 
 ---
 
-**Made with ❤️ by [Abdul Hayy Khan](https://www.google.com/search?q=https://www.linkedin.com/in/abdulhayykhan)**
+## License
+
+This project is licensed under the MIT License:
+
+```
+MIT License
+
+Copyright (c) 2026 CrimsonCare Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+*CrimsonCare is designed and maintained with care by [Abdul Hayy Khan](https://www.linkedin.com/in/abdulhayykhan).*

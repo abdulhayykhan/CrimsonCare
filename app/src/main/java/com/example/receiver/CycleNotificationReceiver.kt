@@ -92,6 +92,7 @@ class CycleNotificationReceiver : BroadcastReceiver() {
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle("CrimsonCare")
             .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
@@ -130,11 +131,13 @@ class CycleNotificationReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val text = "Gentle heads-up that your cycle is expected to start in about 2 days. I'm right here with you."
         // 3. Build Notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder) // Built-in recognizable system icon
             .setContentTitle("CrimsonCare")
-            .setContentText("Gentle heads-up that your cycle is expected to start in about 2 days. I'm right here with you.")
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
@@ -174,11 +177,13 @@ class CycleNotificationReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val text = "You've reached your predicted ovulation day! Shining so bright today."
         // 3. Build Notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder) // Built-in system icon
             .setContentTitle("CrimsonCare")
-            .setContentText("You've reached your predicted ovulation day! Shining so bright today.")
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

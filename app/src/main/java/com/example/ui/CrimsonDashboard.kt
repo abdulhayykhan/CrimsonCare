@@ -55,8 +55,10 @@ fun CrimsonDashboard(
     val allDailyLogs by viewModel.allDailyLogs.collectAsStateWithLifecycle()
     val selectedDateLog by viewModel.selectedDateLog.collectAsStateWithLifecycle()
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+    val notifications by viewModel.notifications.collectAsStateWithLifecycle()
 
     var showSetupDialog by remember { mutableStateOf(false) }
+    var showNotificationDialog by remember { mutableStateOf(false) }
     var hasShownOvulationPopup by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     var hasShownLatePeriodAlert by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 
@@ -106,21 +108,53 @@ fun CrimsonDashboard(
                     },
                     actions = {
                         if (userSettings != null && userSettings?.lastPeriodDate?.isNotBlank() == true) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(end = 16.dp)
-                                    .size(44.dp)
-                                    .background(WarmRose, CircleShape)
-                                    .clickable { showSetupDialog = true }
-                                    .testTag("settings_button"),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.padding(end = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = "Edit Settings",
-                                    tint = CrimsonSecondary,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                // Bell Button
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(WarmRose, CircleShape)
+                                        .clickable { showNotificationDialog = true }
+                                        .testTag("notifications_bell_button"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Notifications,
+                                        contentDescription = "Notifications",
+                                        tint = CrimsonSecondary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    if (notifications.isNotEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .background(Color.Red, CircleShape)
+                                                .align(Alignment.TopEnd)
+                                                .offset(x = (-4).dp, y = 4.dp)
+                                        )
+                                    }
+                                }
+
+                                // Settings Button
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(WarmRose, CircleShape)
+                                        .clickable { showSetupDialog = true }
+                                        .testTag("settings_button"),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = "Edit Settings",
+                                        tint = CrimsonSecondary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     },
@@ -153,27 +187,170 @@ fun CrimsonDashboard(
                 } else {
                     // Active tracker dashboard
                     DashboardContent(
-                    cycleState = cycleState,
-                    allLogs = allDailyLogs,
-                    onLogClick = {
-                        viewModel.selectDate(LocalDate.now().toString())
-                        viewModel.navigateTo(CrimsonScreen.DAILY_LOGGER)
-                    },
-                    onLogEditClick = { date ->
-                        viewModel.selectDate(date)
-                        viewModel.navigateTo(CrimsonScreen.DAILY_LOGGER)
-                    },
-                    onDeleteLog = { date ->
-                        viewModel.deleteDailyLog(date)
-                    },
-                    onResetRequest = {
-                        viewModel.resetSettings()
-                    }
-                )
-            }
+                        cycleState = cycleState,
+                        allLogs = allDailyLogs,
+                        notifications = notifications,
+                        onClearNotification = { id -> viewModel.clearNotification(context, id) },
+                        onNavigateToSettings = { viewModel.navigateTo(CrimsonScreen.SETTINGS) },
+                        onLogClick = {
+                            viewModel.selectDate(LocalDate.now().toString())
+                            viewModel.navigateTo(CrimsonScreen.DAILY_LOGGER)
+                        },
+                        onLogEditClick = { date ->
+                            viewModel.selectDate(date)
+                            viewModel.navigateTo(CrimsonScreen.DAILY_LOGGER)
+                        },
+                        onDeleteLog = { date ->
+                            viewModel.deleteDailyLog(date)
+                        },
+                        onResetRequest = {
+                            viewModel.resetSettings()
+                        }
+                    )
+                }
 
-            // Dialog for editing user settings
-            if (showSetupDialog) {
+                // Dialog for in-app notifications
+                if (showNotificationDialog) {
+                    Dialog(onDismissRequest = { showNotificationDialog = false }) {
+                        GlassCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            cornerRadius = 24.dp
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Notifications,
+                                            contentDescription = null,
+                                            tint = CrimsonPrimary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Text(
+                                            text = "Loving Alerts",
+                                            style = MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 20.sp
+                                            ),
+                                            color = CrimsonPrimary
+                                        )
+                                    }
+                                    if (notifications.isNotEmpty()) {
+                                        TextButton(
+                                            onClick = { viewModel.clearAllNotifications(context) },
+                                            modifier = Modifier.testTag("clear_all_notifications_button")
+                                        ) {
+                                            Text(
+                                                text = "Clear All",
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = CrimsonSecondary
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (notifications.isEmpty()) {
+                                    Text(
+                                        text = "No alerts today, pretty! Enjoy your beautiful day.",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = SleekTextSecondary,
+                                            textAlign = TextAlign.Center
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 24.dp)
+                                    )
+                                } else {
+                                    LazyColumn(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(max = 300.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        items(notifications, key = { it.id }) { notif ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                                    .border(1.dp, SleekBorderVariant, RoundedCornerShape(12.dp))
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = notif.title,
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 14.sp
+                                                        ),
+                                                        color = SleekTextPrimary
+                                                    )
+                                                    Spacer(modifier = Modifier.height(2.dp))
+                                                    Text(
+                                                        text = notif.message,
+                                                        style = MaterialTheme.typography.bodySmall.copy(
+                                                            fontSize = 12.sp,
+                                                            lineHeight = 16.sp
+                                                        ),
+                                                        color = SleekTextSecondary
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = notif.timestamp,
+                                                        style = MaterialTheme.typography.labelSmall.copy(
+                                                            fontSize = 10.sp,
+                                                            color = CrimsonSecondary.copy(alpha = 0.8f)
+                                                        )
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = { viewModel.clearNotification(context, notif.id) },
+                                                    modifier = Modifier.size(28.dp).testTag("delete_notification_${notif.id}")
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Close,
+                                                        contentDescription = "Clear",
+                                                        tint = SleekTextSecondary,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { showNotificationDialog = false },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = CrimsonPrimary)
+                                ) {
+                                    Text("Close")
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Dialog for editing user settings
+                if (showSetupDialog) {
                 Dialog(onDismissRequest = { showSetupDialog = false }) {
                     GlassCard(
                         modifier = Modifier
@@ -624,6 +801,9 @@ fun OnboardingFormContent(
 fun DashboardContent(
     cycleState: CycleState,
     allLogs: List<DailyLog>,
+    notifications: List<InAppNotification>,
+    onClearNotification: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     onLogClick: () -> Unit,
     onLogEditClick: (String) -> Unit,
     onDeleteLog: (String) -> Unit,
@@ -667,6 +847,140 @@ fun DashboardContent(
                         ),
                         color = SleekTextSecondary
                     )
+                }
+            }
+        }
+
+        // 2. Personal Reminders / Notifications section with Settings Icon
+        item {
+            GlassCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .testTag("personal_reminders_card"),
+                cornerRadius = 24.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = CrimsonPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "Personal Reminders",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                ),
+                                color = CrimsonPrimary
+                            )
+                        }
+                        
+                        // Settings icon in the notification section header
+                        IconButton(
+                            onClick = onNavigateToSettings,
+                            modifier = Modifier.size(36.dp).testTag("notifications_section_settings_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Notification Settings",
+                                tint = CrimsonSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    if (notifications.isEmpty()) {
+                        Text(
+                            text = "No alerts today, pretty! Enjoy your beautiful day.",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = SleekTextSecondary,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            notifications.take(3).forEach { notif ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color.White.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                        .border(1.dp, SleekBorderVariant, RoundedCornerShape(12.dp))
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = notif.title,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp
+                                            ),
+                                            color = SleekTextPrimary
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = notif.message,
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                fontSize = 12.sp,
+                                                lineHeight = 16.sp
+                                            ),
+                                            color = SleekTextSecondary
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = notif.timestamp,
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontSize = 10.sp,
+                                                color = CrimsonSecondary.copy(alpha = 0.8f)
+                                            )
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { onClearNotification(notif.id) },
+                                        modifier = Modifier.size(28.dp).testTag("delete_dashboard_notification_${notif.id}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Clear",
+                                            tint = SleekTextSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            if (notifications.size > 3) {
+                                Text(
+                                    text = "And ${notifications.size - 3} more alerts in the top bell...",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = CrimsonSecondary
+                                    ),
+                                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
